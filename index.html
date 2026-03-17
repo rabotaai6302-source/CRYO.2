@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CRYOTEST</title>
+  <link rel="preload" as="image" href="./assets/scenes/c1_capsule_glass.png" />
+  <link rel="stylesheet" href="./menu.css" />
+</head>
+<body>
+
+  <div class="bg"></div>
+  <div class="pulse"></div>
+  <div class="grain"></div>
+  <div class="vignette"></div>
+  <div class="menuLoading" id="menuLoading">
+    <div class="menuLoadingInner">
+      <div class="menuLoadingLabel">Загрузка матричной оболочки</div>
+      <div class="menuLoadingBar"><span></span></div>
+    </div>
+  </div>
+
+  <div class="overlayFlash" id="flash"></div>
+
+  <div class="wrap" id="menuWrap" style="visibility:hidden;">
+    <div class="hud">
+
+      <div class="title">CRYOTEST</div>
+      <div class="subtitle">Neurobehavioral Evaluation • Module 47-B</div>
+
+      <div class="statusrow">
+        <span>SUBJECT: 47</span>
+        <span>STATE: READY</span>
+      </div>
+
+      <div class="buttons">
+        <button class="btn" id="btnStart">Начать тест</button>
+        <button class="btn secondary" id="btnContinue" disabled>Продолжить (скоро)</button>
+      </div>
+
+      <div class="footer">
+        <div id="hint" class="hint">Музыка включается тумблером «Звук».</div>
+      </div>
+
+      <div class="version">v0.1</div>
+
+      <button class="soundToggle" id="btnSound" type="button" aria-label="Sound toggle">
+        <span class="dot" id="soundDot" aria-hidden="true"></span>
+        <span class="label" id="soundLabel">ЗВУК: ВЫКЛ</span>
+      </button>
+
+    </div>
+  </div>
+
+  <audio id="menuAudio" src="./assets/menu_ambient.mp3" loop preload="none"></audio>
+  <audio id="uiClick" src="./assets/ui_click.mp3" preload="auto"></audio>
+
+  <script>
+    /* BUILD_ID: CRYOTEST_INDEX_2026-02-25_01 */
+
+    const flash = document.getElementById("flash");
+    const btnStart = document.getElementById("btnStart");
+    const btnSound = document.getElementById("btnSound");
+    const menuWrap = document.getElementById("menuWrap");
+    const menuLoading = document.getElementById("menuLoading");
+
+    const hint = document.getElementById("hint");
+    const soundLabel = document.getElementById("soundLabel");
+
+    const menuAudio = document.getElementById("menuAudio");
+    const uiClick = document.getElementById("uiClick");
+
+    const SOUND_KEY = "cryotest_sound_on";
+    let soundEnabled = localStorage.getItem(SOUND_KEY) === "1";
+
+    function preloadImage(src){
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.decoding = "async";
+        img.onload = () => resolve(true);
+        img.onerror = () => resolve(false);
+        img.src = src;
+      });
+    }
+
+    async function preloadAudio(src){
+      try {
+        await fetch(src, { cache: "force-cache" });
+      } catch(e){}
+    }
+
+    async function preloadMenuAssets(){
+      await Promise.all([
+        preloadImage("./assets/menu_bg.png"),
+        preloadAudio("./assets/menu_ambient.mp3")
+      ]);
+    }
+
+    function showMenuLoading(on){
+      if (!menuLoading) return;
+      menuLoading.classList.toggle("is-hidden", !on);
+    }
+
+    function flashCold(ms=200){
+      flash.style.transitionDuration = ms + "ms";
+      flash.style.opacity = "1";
+    }
+    function flashOff(ms=240){
+      flash.style.transitionDuration = ms + "ms";
+      flash.style.opacity = "0";
+    }
+
+    function clickSfx(){
+      if (!soundEnabled) return;
+      try {
+        uiClick.currentTime = 0;
+        uiClick.volume = 0.22;
+        uiClick.play();
+      } catch(e){}
+    }
+
+    async function startMenuMusic(){
+      try {
+        menuAudio.volume = 0.18;
+        await menuAudio.play();
+      } catch(e){}
+    }
+
+    function stopMenuMusic(){
+      try { menuAudio.pause(); } catch(e){}
+    }
+
+    function applySoundUI(){
+      if (soundEnabled){
+        btnSound.classList.add("dim");
+        btnSound.classList.add("on");
+        soundLabel.textContent = "ЗВУК: ВКЛ";
+        hint.classList.add("hintOff");
+        hint.classList.remove("hintAttention");
+      } else {
+        btnSound.classList.remove("dim");
+        btnSound.classList.remove("on");
+        soundLabel.textContent = "ЗВУК: ВЫКЛ";
+        hint.classList.remove("hintOff");
+        hint.classList.add("hintAttention");
+      }
+    }
+
+    async function bootMenu(){
+      showMenuLoading(true);
+      await preloadMenuAssets();
+      applySoundUI();
+      if (soundEnabled) await startMenuMusic();
+      if (menuWrap) menuWrap.style.visibility = "visible";
+      showMenuLoading(false);
+
+      try {
+        const firstScene = new Image();
+        firstScene.decoding = "async";
+        firstScene.src = "./assets/scenes/c1_capsule_glass.png";
+      } catch(e){}
+    }
+
+    btnSound.addEventListener("click", async () => {
+      soundEnabled = !soundEnabled;
+      localStorage.setItem(SOUND_KEY, soundEnabled ? "1" : "0");
+      applySoundUI();
+
+      if (soundEnabled){
+        await startMenuMusic();
+        clickSfx();
+      } else {
+        stopMenuMusic();
+      }
+    });
+
+    btnStart.addEventListener("click", async () => {
+      clickSfx();
+
+      // ставим флаг для плавного проявления в игре
+      try { sessionStorage.setItem("cryotest_transition", "1"); } catch(e) {}
+
+      // холодный fade
+      flashCold(180);
+
+      // сброс локального состояния для статической версии
+      try { localStorage.removeItem("cryotest_game_state_v1"); } catch(e) {}
+
+      setTimeout(() => {
+        window.location.href = "./game.html";
+      }, 220);
+    });
+
+    // на всякий: если вдруг вернулись назад и оверлей остался
+    flashOff(0);
+    bootMenu();
+  </script>
+
+</body>
+</html>
