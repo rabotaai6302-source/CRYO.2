@@ -15,7 +15,7 @@
   <div class="vignette"></div>
   <div class="menuLoading" id="menuLoading">
     <div class="menuLoadingInner">
-      <div class="menuLoadingLabel">Загрузка матричной оболочки</div>
+      <div class="menuLoadingLabel">ЗАГРУЗКА МАТРИЧНОЙ ОБОЛОЧКИ</div>
       <div class="menuLoadingBar"><span></span></div>
     </div>
   </div>
@@ -23,32 +23,46 @@
   <div class="overlayFlash" id="flash"></div>
 
   <div class="wrap" id="menuWrap" style="visibility:hidden;">
-    <div class="hud">
+    <div class="menuModule">
+      <header class="hudBar">
+        <div class="hudMeta">
+          <div class="hudEyebrow">AURIGA-8</div>
+          <div class="hudSystem">SUBJECT 47</div>
+        </div>
 
-      <div class="title">CRYOTEST</div>
-      <div class="subtitle">Neurobehavioral Evaluation • Module 47-B</div>
+        <div class="hudActions">
+          <div class="hudGhost" aria-hidden="true">
+            <span></span>
+            <span></span>
+          </div>
 
-      <div class="statusrow">
-        <span>SUBJECT: 47</span>
-        <span>STATE: READY</span>
-      </div>
+          <button class="soundToggle" id="btnSound" type="button" aria-label="Sound toggle">
+            <span class="dot" id="soundDot" aria-hidden="true"></span>
+            <span class="label" id="soundLabel">ЗВУК: ВЫКЛ</span>
+          </button>
+        </div>
+      </header>
 
-      <div class="buttons">
-        <button class="btn" id="btnStart">Начать тест</button>
-        <button class="btn secondary" id="btnContinue" disabled>Продолжить (скоро)</button>
-      </div>
+      <section class="menuScene" aria-label="Главное меню">
+        <div class="menuSceneShade" aria-hidden="true"></div>
 
-      <div class="footer">
-        <div id="hint" class="hint">Музыка включается тумблером «Звук».</div>
-      </div>
+        <div class="menuSceneContent">
+          <div class="title">CRYOTEST</div>
+          <div class="subtitle">Neurobehavioral Evaluation • Module 47-B</div>
 
-      <div class="version">v0.1</div>
+          <div class="statusrow">
+            <span>STATE: READY</span>
+            <span>LINK: STABLE</span>
+          </div>
 
-      <button class="soundToggle" id="btnSound" type="button" aria-label="Sound toggle">
-        <span class="dot" id="soundDot" aria-hidden="true"></span>
-        <span class="label" id="soundLabel">ЗВУК: ВЫКЛ</span>
-      </button>
+          <div id="hint" class="hint">Музыка включается тумблером «Звук».</div>
+        </div>
 
+        <div class="menuSceneDock">
+          <button class="btn" id="btnStart">Начать тест</button>
+          <div class="version">v0.1</div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -56,7 +70,7 @@
   <audio id="uiClick" src="./assets/ui_click.mp3" preload="auto"></audio>
 
   <script>
-    /* BUILD_ID: CRYOTEST_INDEX_2026-02-25_01 */
+    /* BUILD_ID: CRYOTEST_INDEX_2026-03-18_UI_MODULE_01 */
 
     const flash = document.getElementById("flash");
     const btnStart = document.getElementById("btnStart");
@@ -177,13 +191,8 @@
     btnStart.addEventListener("click", async () => {
       clickSfx();
 
-      // ставим флаг для плавного проявления в игре
       try { sessionStorage.setItem("cryotest_transition", "1"); } catch(e) {}
-
-      // холодный fade
       flashCold(180);
-
-      // сброс локального состояния для статической версии
       try { localStorage.removeItem("cryotest_game_state_v1"); } catch(e) {}
 
       setTimeout(() => {
@@ -191,7 +200,6 @@
       }, 220);
     });
 
-    // на всякий: если вдруг вернулись назад и оверлей остался
     flashOff(0);
     bootMenu();
   </script>

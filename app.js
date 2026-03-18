@@ -1,4 +1,4 @@
-/* BUILD_ID: CRYOTEST_APP_JS_2026-03-17_UI_STAGE_B_FIX_03 */
+/* BUILD_ID: CRYOTEST_APP_JS_2026-03-18_UI_MODULE_01 */
 
 const SCENES_URL = "./scenes.json";
 const GAME_STATE_KEY = "cryotest_game_state_v1";
@@ -9,6 +9,7 @@ const sceneText = document.getElementById("sceneText");
 const fallbackTextWrap = document.getElementById("fallbackTextWrap");
 const fallbackText = document.getElementById("fallbackText");
 
+const sceneModule = document.getElementById("sceneModule");
 const sceneImageWrap = document.getElementById("sceneImageWrap");
 const sceneImageEl = document.getElementById("sceneImage");
 
@@ -25,19 +26,21 @@ const audioNo = document.getElementById("audioNo");
 const gameWrap = document.getElementById("gameWrap");
 
 const soundBtn = document.getElementById("soundBtn");
-const soundBtnFallback = document.getElementById("soundBtnFallback");
+const hudSystemLabel = document.getElementById("hudSystemLabel");
+const hudSystemValue = document.getElementById("hudSystemValue");
 const overlayEl = document.getElementById("overlay");
 const buildEl = document.getElementById("buildId");
 const sceneLoadingEl = document.getElementById("sceneLoading");
 const sceneLoadingBarFill = document.getElementById("sceneLoadingBarFill");
 const sceneLoadingLabel = document.getElementById("sceneLoadingLabel");
 
-if (buildEl) buildEl.textContent = "BUILD_ID: CRYOTEST_APP_JS_2026-03-16_UI_STAGE_B_FIX_03";
+if (buildEl) buildEl.textContent = "BUILD_ID: CRYOTEST_APP_JS_2026-03-18_UI_MODULE_01";
 
 const sleep = (ms) => new Promise(res => setTimeout(res, ms));
 const TEXT_REVEAL_MS = 5000;
 const IMAGE_REVEAL_MS = 10000;
 const CHOICE_REVEAL_MS = 5000;
+let currentSceneLayout = "landscape";
 
 function safeShow(el, display="block"){
   if(!el) return;
@@ -50,6 +53,124 @@ function safeHide(el){
 function safeSetText(el, txt){
   if(!el) return;
   el.textContent = txt;
+}
+
+function clamp(num, min, max){
+  return Math.min(Math.max(num, min), max);
+}
+
+function normalizeUiString(value){
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function getSceneUiConfig(scene){
+  const meta = scene?.meta || {};
+  const ui = meta.ui || {};
+  return { meta, ui };
+}
+
+function resolveSceneLayout(scene, width = 0, height = 0){
+  const { meta, ui } = getSceneUiConfig(scene);
+  const rawLayout = normalizeUiString(
+    ui.layout || meta.layout || scene?.layout || scene?.orientation
+  ).toLowerCase();
+
+  if(["portrait", "vertical"].includes(rawLayout)){
+    return "portrait";
+  }
+  if(["landscape", "horizontal"].includes(rawLayout)){
+    return "landscape";
+  }
+
+  if(width > 0 && height > 0){
+    return height > width ? "portrait" : "landscape";
+  }
+
+  return "landscape";
+}
+
+function applySceneLayout(layout){
+  currentSceneLayout = layout === "portrait" ? "portrait" : "landscape";
+  if(!sceneModule) return;
+  sceneModule.classList.toggle("layout-portrait", currentSceneLayout === "portrait");
+  sceneModule.classList.toggle("layout-landscape", currentSceneLayout === "landscape");
+}
+
+function updateSceneHud(scene){
+  const { meta, ui } = getSceneUiConfig(scene);
+  const hud = ui.hud || meta.hud || {};
+  const cycle = gameState?.cycle || meta.cycle || scene?.cycle || 1;
+  const defaultValue = meta.ended ? "SESSION END" : `CYCLE ${cycle}`;
+
+  safeSetText(hudSystemLabel, normalizeUiString(hud.label) || "AURIGA-8");
+  safeSetText(hudSystemValue, normalizeUiString(hud.value) || defaultValue);
+}
+
+function sanitizeChoiceVariant(variant){
+  return normalizeUiString(variant).toLowerCase().replace(/[^a-z0-9_-]/g, "");
+}
+
+function getChoiceUiConfig(choice){
+  const ui = choice?.ui || choice?.button || choice?.appearance || {};
+  const position = ui.position || {};
+
+  const x = Number(position.x ?? ui.x);
+  const y = Number(position.y ?? ui.y);
+  const order = Number(ui.order);
+  const align = normalizeUiString(position.align || ui.align).toLowerCase();
+
+  return {
+    variant: sanitizeChoiceVariant(ui.variant),
+    icon: normalizeUiString(ui.icon),
+    borderColor: normalizeUiString(ui.borderColor || ui.color),
+    background: normalizeUiString(ui.background),
+    textColor: normalizeUiString(ui.textColor || ui.foreground),
+    order: Number.isFinite(order) ? order : null,
+    align: ["start", "center", "end"].includes(align) ? align : "",
+    x: Number.isFinite(x) ? clamp(x, 0, 100) : null,
+    y: Number.isFinite(y) ? clamp(y, 0, 100) : null,
+  };
+}
+
+function resetChoiceGridPresentation(grid){
+  if(!grid) return;
+  grid.classList.remove("choiceGrid--freeform");
+  grid.style.minHeight = "";
+  delete grid.dataset.layout;
+}
+
+function applyChoiceButtonPresentation(btn, choiceUi){
+  if(!btn) return;
+
+  if(choiceUi.variant){
+    btn.classList.add(`choiceBtn--${choiceUi.variant}`);
+  }
+
+  if(choiceUi.order !== null){
+    btn.style.order = String(choiceUi.order);
+  }
+
+  if(choiceUi.borderColor){
+    btn.style.setProperty("--choice-border", choiceUi.borderColor);
+    btn.style.setProperty("--choice-shadow", choiceUi.borderColor);
+  }
+
+  if(choiceUi.background){
+    btn.style.setProperty("--choice-bg", choiceUi.background);
+  }
+
+  if(choiceUi.textColor){
+    btn.style.setProperty("--choice-fg", choiceUi.textColor);
+  }
+
+  if(choiceUi.x !== null || choiceUi.y !== null){
+    btn.classList.add("is-floating");
+    btn.style.setProperty("--choice-x", `${choiceUi.x ?? 50}%`);
+    btn.style.setProperty("--choice-y", `${choiceUi.y ?? 50}%`);
+    if(choiceUi.align){
+      btn.dataset.choiceAlign = choiceUi.align;
+    }
+  }
 }
 
 function animateTypewriter(el, text, duration){
@@ -352,10 +473,10 @@ function getRenderScene(){
     return {
       id: sceneId,
       cycle: gameState.cycle,
-      text: `ТЕСТ ЗАВЕРШЁН.\nОбъект: Клон №47.\nНазначение: ${roleFromDom(dominant)}`,
+      text: `\u0422\u0415\u0421\u0422 \u0417\u0410\u0412\u0415\u0420\u0428\u0401\u041d.\n\u041e\u0431\u044a\u0435\u043a\u0442: \u041a\u043b\u043e\u043d \u211647.\n\u041d\u0430\u0437\u043d\u0430\u0447\u0435\u043d\u0438\u0435: ${roleFromDom(dominant)}`,
       effects: ["sterile_silence", "light_white"],
       choices: [
-        { text: "Завершить", next: "system_restart", delta: {} }
+        { text: "\u0417\u0430\u0432\u0435\u0440\u0448\u0438\u0442\u044c", next: "system_restart", delta: {} }
       ],
       meta: { ended: true, dominant, stats: gameState.stats },
     };
@@ -365,10 +486,10 @@ function getRenderScene(){
     return {
       id: "system_restart",
       cycle: gameState.cycle,
-      text: "Следующий.",
+      text: "\u0421\u043b\u0435\u0434\u0443\u044e\u0449\u0438\u0439.",
       effects: ["flash_subtle"],
       choices: [
-        { text: "Начать заново", next: "system_reset_full", delta: {} }
+        { text: "\u041d\u0430\u0447\u0430\u0442\u044c \u0437\u0430\u043d\u043e\u0432\u043e", next: "system_reset_full", delta: {} }
       ],
       meta: { ended: true, stats: gameState.stats },
     };
@@ -484,7 +605,7 @@ async function initAudio(){
   audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
   master = audioCtx.createGain();
-  master.gain.value = 0; // стартуем с 0, поднимем если звук включен
+  master.gain.value = 0; // СЃС‚Р°СЂС‚СѓРµРј СЃ 0, РїРѕРґРЅРёРјРµРј РµСЃР»Рё Р·РІСѓРє РІРєР»СЋС‡РµРЅ
   master.connect(audioCtx.destination);
 
   gameAmbGain = audioCtx.createGain();
@@ -512,7 +633,7 @@ async function initAudio(){
   }
 }
 
-// гарантированный глобальный mute/unmute
+// РіР°СЂР°РЅС‚РёСЂРѕРІР°РЅРЅС‹Р№ РіР»РѕР±Р°Р»СЊРЅС‹Р№ mute/unmute
 function hardMute(on){
   if(!master) return;
   if(on) fade(master, 0.0, 140);
@@ -683,7 +804,7 @@ async function playTextReveal(){
 
 // ===== SOUND TOGGLE (HUD) =====
 function syncSoundButtonUI(){
-  [soundBtn, soundBtnFallback].forEach((btn)=>{
+  [soundBtn].forEach((btn)=>{
     if(!btn) return;
     if(isSoundEnabled()) btn.classList.add("active");
     else btn.classList.remove("active");
@@ -726,7 +847,6 @@ function bindSoundButton(btn){
 }
 
 bindSoundButton(soundBtn);
-bindSoundButton(soundBtnFallback);
 
 // ===== DATA =====
 async function fetchScene(){
@@ -754,21 +874,21 @@ async function choose(index){
 function setSceneText(text, mode="image"){
   const t = (text || "").trim();
 
-  if(sceneTextWrap) sceneTextWrap.style.display = "none";
-  if(fallbackTextWrap) fallbackTextWrap.style.display = "none";
-  if(sceneText) sceneText.textContent = "";
-  if(fallbackText) fallbackText.textContent = "";
+  safeHide(sceneTextWrap);
+  safeHide(fallbackTextWrap);
+  safeSetText(sceneText, "");
+  safeSetText(fallbackText, "");
 
   if(!t) return;
 
   if(mode === "fallback"){
-    if(fallbackText) fallbackText.textContent = t;
-    if(fallbackTextWrap) fallbackTextWrap.style.display = "block";
+    safeSetText(fallbackText, t);
+    safeShow(fallbackTextWrap, "block");
     return;
   }
 
-  if(sceneText) sceneText.textContent = t;
-  if(sceneTextWrap) sceneTextWrap.style.display = "block";
+  safeSetText(sceneText, t);
+  safeShow(sceneTextWrap, "block");
 }
 
 function resetScenePresentation(){
@@ -792,6 +912,8 @@ function resetScenePresentation(){
     sceneImageWrap.classList.remove("is-visible");
   }
 
+  [choiceGrid, fallbackGrid].forEach(resetChoiceGridPresentation);
+
   if(fallbackGrid){
     fallbackGrid.style.opacity = "";
     fallbackGrid.style.transform = "";
@@ -801,31 +923,48 @@ function resetScenePresentation(){
 
 function setImageVisible(on){
   if(!sceneImageWrap) return;
-  sceneImageWrap.style.display = on ? "block" : "none";
+  sceneImageWrap.style.display = on ? "flex" : "none";
 }
 
 function setChoiceMode(mode){
-  // mode: "image" | "fallback"
   const inImage = (mode === "image");
 
   if(choiceDock) choiceDock.style.display = inImage ? "flex" : "none";
-  if(fallbackDock) fallbackDock.style.display = inImage ? "none" : "block";
+  if(fallbackDock) fallbackDock.style.display = inImage ? "none" : "flex";
 }
 
 function clearChoices(){
-  if(choiceGrid) choiceGrid.innerHTML = "";
-  if(fallbackGrid) fallbackGrid.innerHTML = "";
+  [choiceGrid, fallbackGrid].forEach((grid) => {
+    if(!grid) return;
+    grid.innerHTML = "";
+    resetChoiceGridPresentation(grid);
+  });
 }
 
 function makeChoiceButton(c, idx){
+  const choiceUi = getChoiceUiConfig(c);
   const btn = document.createElement("button");
   btn.className = "choiceBtn";
-  btn.textContent = c.text;
+  btn.type = "button";
+
+  if(choiceUi.icon){
+    const icon = document.createElement("span");
+    icon.className = "choiceBtn__icon";
+    icon.textContent = choiceUi.icon;
+    btn.appendChild(icon);
+  }
+
+  const label = document.createElement("span");
+  label.className = "choiceBtn__label";
+  label.textContent = c.text;
+  btn.appendChild(label);
+
+  applyChoiceButtonPresentation(btn, choiceUi);
 
   btn.onclick = async () => {
     await playClick();
 
-    // если overlay отсутствует — просто без фейда
+    // РµСЃР»Рё overlay РѕС‚СЃСѓС‚СЃС‚РІСѓРµС‚ вЂ” РїСЂРѕСЃС‚Рѕ Р±РµР· С„РµР№РґР°
     if(overlayEl) await coldFadeIn(170);
 
     const next = await choose(idx);
@@ -839,7 +978,16 @@ function makeChoiceButton(c, idx){
 
 function mountChoiceButtons(choices, targetGrid){
   if(!targetGrid) return;
-  (choices || []).forEach((c, idx) => {
+  const resolvedChoices = Array.isArray(choices) ? choices : [];
+  const hasFloatingButtons = resolvedChoices.some((choice) => {
+    const choiceUi = getChoiceUiConfig(choice);
+    return choiceUi.x !== null || choiceUi.y !== null;
+  });
+
+  targetGrid.dataset.layout = currentSceneLayout;
+  targetGrid.classList.toggle("choiceGrid--freeform", hasFloatingButtons);
+
+  resolvedChoices.forEach((c, idx) => {
     targetGrid.appendChild(makeChoiceButton(c, idx));
   });
 }
@@ -865,23 +1013,28 @@ function setImageOrientationClass(width, height){
 // ===== RENDER =====
 async function renderSceneImage(scene){
   const img = (scene.image || "").trim();
+  const defaultLayout = resolveSceneLayout(scene);
   if(img && sceneImageEl){
     const src = getSceneImageSrc(scene);
     await preloadImage(src);
     sceneImageEl.classList.remove("is-portrait", "is-landscape");
     sceneImageEl.onload = () => {
       setImageOrientationClass(sceneImageEl.naturalWidth, sceneImageEl.naturalHeight);
+      applySceneLayout(resolveSceneLayout(scene, sceneImageEl.naturalWidth, sceneImageEl.naturalHeight));
       forceImageFloat();
     };
     sceneImageEl.src = src;
     setImageVisible(true);
+    applySceneLayout(defaultLayout);
 
     if(sceneImageEl.complete){
       setImageOrientationClass(sceneImageEl.naturalWidth, sceneImageEl.naturalHeight);
+      applySceneLayout(resolveSceneLayout(scene, sceneImageEl.naturalWidth, sceneImageEl.naturalHeight));
       forceImageFloat();
     }
     return true;
   }
+  applySceneLayout(defaultLayout);
   setImageVisible(false);
   return false;
 }
@@ -940,7 +1093,7 @@ async function animateScenePresentation(hasImage){
 function showLoadingScreen(on){
   if(!sceneLoadingEl) return;
   if(sceneLoadingLabel){
-    sceneLoadingLabel.textContent = "Калибровка матрицы сознания";
+    sceneLoadingLabel.textContent = "COGNITIVE MATRIX CALIBRATION";
   }
   if(sceneLoadingBarFill){
     sceneLoadingBarFill.style.animationPlayState = on ? "running" : "paused";
@@ -967,6 +1120,7 @@ async function applySceneAudio(scene){
 
 async function renderScene(scene){
   resetScenePresentation();
+  updateSceneHud(scene);
 
   // 1) image
   const hasImage = await renderSceneImage(scene);
@@ -978,7 +1132,7 @@ async function renderScene(scene){
   // 3) choices
   clearChoices();
 
-  // если вдруг нет обоих контейнеров — не ломаемся, просто не покажем кнопки
+  // РµСЃР»Рё РІРґСЂСѓРі РЅРµС‚ РѕР±РѕРёС… РєРѕРЅС‚РµР№РЅРµСЂРѕРІ вЂ” РЅРµ Р»РѕРјР°РµРјСЃСЏ, РїСЂРѕСЃС‚Рѕ РЅРµ РїРѕРєР°Р¶РµРј РєРЅРѕРїРєРё
   if(hasImage){
     setChoiceMode("image");
     mountChoiceButtons(scene.choices || [], choiceGrid || fallbackGrid);
@@ -987,7 +1141,7 @@ async function renderScene(scene){
     mountChoiceButtons(scene.choices || [], fallbackGrid || choiceGrid);
   }
 
-  // 4) effects (если controller не загрузился — просто пропустим)
+  // 4) effects (РµСЃР»Рё controller РЅРµ Р·Р°РіСЂСѓР·РёР»СЃСЏ вЂ” РїСЂРѕСЃС‚Рѕ РїСЂРѕРїСѓСЃС‚РёРј)
   const effects = scene.effects || [];
   if(window.effectController && typeof window.effectController.run === "function"){
     await window.effectController.run(effects);
@@ -1015,7 +1169,8 @@ async function startGame(){
     setImageVisible(false);
     setChoiceMode("fallback");
     clearChoices();
-    setSceneText("Не удалось загрузить данные игры.", "fallback");
+    updateSceneHud({ meta: { hud: { value: "SYSTEM ERROR" } } });
+    setSceneText("Failed to load game data.", "fallback");
     await animateScenePresentation(false);
   }
 
@@ -1073,3 +1228,4 @@ if(audioYes) audioYes.onclick = () => handleAudioChoice(true);
 if(audioNo)  audioNo.onclick  = () => handleAudioChoice(false);
 
 init();
+

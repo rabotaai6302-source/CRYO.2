@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>CRYOTEST — TEST</title>
+<title>CRYOTEST - TEST</title>
 <link rel="stylesheet" href="./game.css">
 </head>
 <body>
@@ -11,7 +11,7 @@
 <div class="bg"></div>
 <div class="sceneLoading" id="sceneLoading">
   <div class="sceneLoadingInner">
-    <div class="sceneLoadingLabel" id="sceneLoadingLabel">Калибровка матрицы сознания</div>
+    <div class="sceneLoadingLabel" id="sceneLoadingLabel">КАЛИБРОВКА МАТРИЦЫ СОЗНАНИЯ</div>
     <div class="sceneLoadingBar"><span id="sceneLoadingBarFill"></span></div>
   </div>
 </div>
@@ -21,8 +21,8 @@
     <div class="audioTitle">AUDIO CHANNEL</div>
     <div class="audioText">Включить атмосферу?</div>
     <div class="audioButtons">
-      <button id="audioYes">✓ ВКЛ</button>
-      <button id="audioNo">✕ ВЫКЛ</button>
+      <button id="audioYes">ВКЛ</button>
+      <button id="audioNo">ВЫКЛ</button>
     </div>
   </div>
 </div>
@@ -30,42 +30,48 @@
 <div class="wrap" id="gameWrap" style="visibility:hidden;">
   <div class="screen">
     <div class="sceneShell">
-      <div class="sceneStage" id="sceneStage">
-        <div class="sceneImageWrap" id="sceneImageWrap" style="display:none;">
-          <img class="sceneImage" id="sceneImage" alt="">
+      <div class="sceneModule layout-landscape" id="sceneModule">
+        <header class="hudBar">
+          <div class="hudMeta">
+            <div class="hudEyebrow" id="hudSystemLabel">AURIGA-8</div>
+            <div class="hudSystem" id="hudSystemValue">CYCLE 1</div>
+          </div>
 
-          <div class="sceneControls" id="sceneControls">
-            <button class="hudPill" id="soundBtn" type="button">
+          <div class="hudActions">
+            <button class="hudButton" id="soundBtn" type="button">
               <span class="pillDot"></span>
               <span>ЗВУК</span>
             </button>
-            <a class="hudLink" href="./index.html">МЕНЮ</a>
+            <a class="hudButton hudLink" href="./index.html">МЕНЮ</a>
           </div>
+        </header>
 
-          <div class="sceneBottomOverlay">
-            <div class="choiceDock" id="choiceDock" style="display:none;">
-              <div class="choiceGrid" id="choiceGrid"></div>
-            </div>
-            <div class="sceneTextWrap sceneTextWrapOverlay" id="sceneTextWrap" style="display:none;">
-              <div class="textPanel">
-                <div class="textInner" id="sceneText"></div>
+        <div class="sceneViewport" id="sceneViewport">
+          <div class="sceneImageWrap" id="sceneImageWrap" style="display:none;">
+            <img class="sceneImage" id="sceneImage" alt="">
+
+            <div class="sceneDock sceneDockOverlay">
+              <div class="choiceDock" id="choiceDock" style="display:none;">
+                <div class="choiceGrid" id="choiceGrid"></div>
+              </div>
+
+              <div class="sceneTextWrap" id="sceneTextWrap" style="display:none;">
+                <div class="textPanel">
+                  <div class="textInner" id="sceneText"></div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        <div class="fallbackDock" id="fallbackDock" style="display:none;">
-          <div class="sceneControls sceneControlsFallback">
-            <button class="hudPill" id="soundBtnFallback" type="button">
-              <span class="pillDot"></span>
-              <span>ЗВУК</span>
-            </button>
-            <a class="hudLink" href="./index.html">МЕНЮ</a>
-          </div>
-          <div class="choiceGrid fallbackChoiceGrid" id="fallbackGrid"></div>
-          <div class="sceneTextWrap fallbackTextWrap" id="fallbackTextWrap" style="display:none;">
-            <div class="textPanel">
-              <div class="textInner" id="fallbackText"></div>
+          <div class="fallbackDock" id="fallbackDock" style="display:none;">
+            <div class="fallbackInner">
+              <div class="choiceGrid fallbackChoiceGrid" id="fallbackGrid"></div>
+
+              <div class="sceneTextWrap fallbackTextWrap" id="fallbackTextWrap" style="display:none;">
+                <div class="textPanel">
+                  <div class="textInner" id="fallbackText"></div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
