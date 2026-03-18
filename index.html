@@ -25,17 +25,9 @@
   <div class="wrap" id="menuWrap" style="visibility:hidden;">
     <div class="menuModule">
       <header class="hudBar">
-        <div class="hudMeta">
-          <div class="hudEyebrow">AURIGA-8</div>
-          <div class="hudSystem">SUBJECT 47</div>
-        </div>
+        <div class="hudEyebrow">AURIGA-8</div>
 
         <div class="hudActions">
-          <div class="hudGhost" aria-hidden="true">
-            <span></span>
-            <span></span>
-          </div>
-
           <button class="soundToggle" id="btnSound" type="button" aria-label="Sound toggle">
             <span class="dot" id="soundDot" aria-hidden="true"></span>
             <span class="label" id="soundLabel">ЗВУК: ВЫКЛ</span>
@@ -44,9 +36,8 @@
       </header>
 
       <section class="menuScene" aria-label="Главное меню">
-        <div class="menuSceneShade" aria-hidden="true"></div>
-
         <div class="menuSceneContent">
+          <div class="menuSceneKicker">SUBJECT 47</div>
           <div class="title">CRYOTEST</div>
           <div class="subtitle">Neurobehavioral Evaluation • Module 47-B</div>
 
@@ -63,6 +54,8 @@
           <div class="version">v0.1</div>
         </div>
       </section>
+
+      <section class="menuTextPanel" id="menuTextPanel"></section>
     </div>
   </div>
 
@@ -77,6 +70,8 @@
     const btnSound = document.getElementById("btnSound");
     const menuWrap = document.getElementById("menuWrap");
     const menuLoading = document.getElementById("menuLoading");
+    const menuTextPanel = document.getElementById("menuTextPanel");
+    const menuSceneDock = document.querySelector(".menuSceneDock");
 
     const hint = document.getElementById("hint");
     const soundLabel = document.getElementById("soundLabel");
@@ -86,6 +81,33 @@
 
     const SOUND_KEY = "cryotest_sound_on";
     let soundEnabled = localStorage.getItem(SOUND_KEY) === "1";
+
+    function buildMenuPanels(){
+      if (!menuTextPanel || menuTextPanel.dataset.ready === "1") return;
+
+      const version = menuSceneDock ? menuSceneDock.querySelector(".version") : null;
+
+      btnStart.textContent = "Начать тест";
+      hint.textContent = "Музыка включается тумблером «Звук».";
+      soundLabel.textContent = "Звук: выкл";
+
+      const lead = document.createElement("div");
+      lead.className = "menuTextLead";
+      lead.textContent = "Диагностический протокол готов к запуску.";
+
+      const copy = document.createElement("div");
+      copy.className = "menuTextCopy";
+      copy.append(lead, hint);
+
+      const actions = document.createElement("div");
+      actions.className = "menuTextActions";
+      actions.append(btnStart);
+      if (version) actions.append(version);
+
+      menuTextPanel.append(copy, actions);
+      if (menuSceneDock) menuSceneDock.remove();
+      menuTextPanel.dataset.ready = "1";
+    }
 
     function preloadImage(src){
       return new Promise((resolve) => {
@@ -162,8 +184,10 @@
 
     async function bootMenu(){
       showMenuLoading(true);
+      buildMenuPanels();
       await preloadMenuAssets();
       applySoundUI();
+      soundLabel.textContent = soundEnabled ? "Звук: вкл" : "Звук: выкл";
       if (soundEnabled) await startMenuMusic();
       if (menuWrap) menuWrap.style.visibility = "visible";
       showMenuLoading(false);
@@ -179,6 +203,7 @@
       soundEnabled = !soundEnabled;
       localStorage.setItem(SOUND_KEY, soundEnabled ? "1" : "0");
       applySoundUI();
+      soundLabel.textContent = soundEnabled ? "Звук: вкл" : "Звук: выкл";
 
       if (soundEnabled){
         await startMenuMusic();

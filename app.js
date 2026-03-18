@@ -6,8 +6,6 @@ const GAME_STATE_KEY = "cryotest_game_state_v1";
 // ===== DOM (UI stage layout) =====
 const sceneTextWrap = document.getElementById("sceneTextWrap");
 const sceneText = document.getElementById("sceneText");
-const fallbackTextWrap = document.getElementById("fallbackTextWrap");
-const fallbackText = document.getElementById("fallbackText");
 
 const sceneModule = document.getElementById("sceneModule");
 const sceneImageWrap = document.getElementById("sceneImageWrap");
@@ -20,12 +18,16 @@ const fallbackDock = document.getElementById("fallbackDock");
 const fallbackGrid = document.getElementById("fallbackGrid");
 
 const audioModal = document.getElementById("audioModal");
+const audioTitle = document.querySelector(".audioTitle");
+const audioTextEl = document.querySelector(".audioText");
 const audioYes = document.getElementById("audioYes");
 const audioNo = document.getElementById("audioNo");
 
 const gameWrap = document.getElementById("gameWrap");
 
 const soundBtn = document.getElementById("soundBtn");
+const soundBtnLabel = soundBtn ? soundBtn.querySelector("span:last-child") : null;
+const menuLink = document.querySelector(".hudLink");
 const hudSystemLabel = document.getElementById("hudSystemLabel");
 const hudSystemValue = document.getElementById("hudSystemValue");
 const overlayEl = document.getElementById("overlay");
@@ -41,6 +43,13 @@ const TEXT_REVEAL_MS = 5000;
 const IMAGE_REVEAL_MS = 10000;
 const CHOICE_REVEAL_MS = 5000;
 let currentSceneLayout = "landscape";
+
+if(soundBtnLabel) soundBtnLabel.textContent = "Звук";
+if(menuLink) menuLink.textContent = "Меню";
+if(audioTitle) audioTitle.textContent = "AUDIO CHANNEL";
+if(audioTextEl) audioTextEl.textContent = "Включить атмосферу?";
+if(audioYes) audioYes.textContent = "Вкл";
+if(audioNo) audioNo.textContent = "Выкл";
 
 function safeShow(el, display="block"){
   if(!el) return;
@@ -871,21 +880,13 @@ async function choose(index){
 }
 
 // ===== UI helpers =====
-function setSceneText(text, mode="image"){
+function setSceneText(text){
   const t = (text || "").trim();
 
   safeHide(sceneTextWrap);
-  safeHide(fallbackTextWrap);
   safeSetText(sceneText, "");
-  safeSetText(fallbackText, "");
 
   if(!t) return;
-
-  if(mode === "fallback"){
-    safeSetText(fallbackText, t);
-    safeShow(fallbackTextWrap, "block");
-    return;
-  }
 
   safeSetText(sceneText, t);
   safeShow(sceneTextWrap, "block");
@@ -896,12 +897,12 @@ function resetScenePresentation(){
     choiceDock.classList.remove("is-visible");
   }
 
-  [sceneTextWrap, fallbackTextWrap].forEach((el) => {
+  [sceneTextWrap].forEach((el) => {
     if(!el) return;
     el.classList.remove("is-visible");
   });
 
-  [sceneText, fallbackText].forEach((el) => {
+  [sceneText].forEach((el) => {
     if(!el) return;
     el.classList.remove("is-visible", "is-revealing", "is-glitching");
     el.style.animation = "none";
@@ -1040,8 +1041,8 @@ async function renderSceneImage(scene){
 }
 
 async function animateScenePresentation(hasImage){
-  const activeTextWrap = hasImage ? sceneTextWrap : fallbackTextWrap;
-  const activeText = hasImage ? sceneText : fallbackText;
+  const activeTextWrap = sceneTextWrap;
+  const activeText = sceneText;
   const imageAnimation = (async () => {
     if(hasImage && sceneImageWrap){
       void sceneImageWrap.offsetWidth;
@@ -1127,7 +1128,7 @@ async function renderScene(scene){
   preloadUpcomingImages(scene);
 
   // 2) text
-  setSceneText(scene.text || "", hasImage ? "image" : "fallback");
+  setSceneText(scene.text || "");
 
   // 3) choices
   clearChoices();
@@ -1170,7 +1171,7 @@ async function startGame(){
     setChoiceMode("fallback");
     clearChoices();
     updateSceneHud({ meta: { hud: { value: "SYSTEM ERROR" } } });
-    setSceneText("Failed to load game data.", "fallback");
+    setSceneText("Failed to load game data.");
     await animateScenePresentation(false);
   }
 
